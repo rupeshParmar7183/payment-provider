@@ -389,6 +389,94 @@ Improves reliability for temporary failures such as:
 
 ---
 
+
+## ER Diagram 
+
+┌─────────────────────┐
+│        users        │
+├─────────────────────┤
+│ id (PK)             │
+│ email               │
+│ password            │
+│ createdAt           │
+│ updatedAt           │
+└─────────┬───────────┘
+          │ 1
+          │
+          │ N
+┌─────────▼───────────┐
+│        cards        │
+├─────────────────────┤
+│ id (PK)             │
+│ userId (FK)         │
+│ cardToken           │
+│ maskedCardNumber    │
+│ cardType            │
+│ expiryMonth         │
+│ expiryYear          │
+│ createdAt           │
+│ updatedAt           │
+└─────────────────────┘
+
+
+┌─────────────────────┐
+│        users        │
+├─────────────────────┤
+│ id (PK)             │
+│ email               │
+│ password            │
+└─────────┬───────────┘
+          │ 1
+          │
+          │ N
+┌─────────▼──────────────┐
+│      transactions      │
+├────────────────────────┤
+│ id (PK)                │
+│ userId (FK)            │
+│ cardToken              │
+│ amount                 │
+│ currency               │
+│ status                 │
+│ retryCount             │
+│ authorizationCode      │
+│ failureReason          │
+│ createdAt              │
+│ updatedAt              │
+└─────────┬──────────────┘
+          │ 1
+          │
+          │ N
+┌─────────▼────────────────────┐
+│  transaction_state_history   │
+├──────────────────────────────┤
+│ id (PK)                      │
+│ transactionId (FK)           │
+│ fromState                    │
+│ toState                      │
+│ reason                       │
+│ createdAt                    │
+└──────────────────────────────┘
+
+
+┌────────────────────────┐
+│      transactions      │
+├────────────────────────┤
+│ id (PK)                │
+└─────────┬──────────────┘
+          │ 1
+          │
+          │ 1
+┌─────────▼──────────────┐
+│    idempotency_keys    │
+├────────────────────────┤
+│ id (PK)                │
+│ idempotencyKey         │
+│ transactionId (FK)     │
+│ createdAt              │
+│ updatedAt              │
+└────────────────────────┘
+
 # Author
 
 Rupesh Parmar

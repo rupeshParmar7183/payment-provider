@@ -14,7 +14,7 @@ import { IdempotencyKey } from '../models/idempotency-key.model';
 import { TransactionStatus } from '../common/enums/transaction-status.enum';
 
 import { BankService } from '../bank/bank.service';
-import { AppLogger } from 'src/common/logger/app.logger';
+import { AppLogger } from '../common/logger/app.logger';
 
 @Injectable()
 export class PaymentsService {

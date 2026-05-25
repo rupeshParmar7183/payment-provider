@@ -1,0 +1,4 @@
+export const RETRYABLE_ERRORS = [
+  'NETWORK_TIMEOUT',
+  'RATE_LIMIT_EXCEEDED',
+];

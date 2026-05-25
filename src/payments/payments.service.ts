@@ -10,7 +10,7 @@ import { Card } from '../models/card.model';
 import { TransactionStateHistory } from '../models/transaction-state-history.model';
 
 import { CreatePaymentDto } from './dto/create-payment.dto';
-
+import { IdempotencyKey } from '../models/idempotency-key.model';
 import { TransactionStatus } from '../common/enums/transaction-status.enum';
 
 import { BankService } from '../bank/bank.service';
@@ -27,6 +27,9 @@ export class PaymentsService {
         @InjectModel(TransactionStateHistory)
         private historyModel: typeof TransactionStateHistory,
 
+        @InjectModel(IdempotencyKey)
+        private idempotencyModel: typeof IdempotencyKey,
+
         private bankService: BankService,
     ) { }
 
@@ -36,6 +39,7 @@ export class PaymentsService {
     async createPayment(
         userId: string,
         createPaymentDto: CreatePaymentDto,
+        idempotencyKey: string,
     ) {
         const {
             cardToken,
@@ -57,6 +61,10 @@ export class PaymentsService {
                 amount,
                 currency,
             );
+        await this.idempotencyModel.create({
+            idempotencyKey,
+            transactionId: transaction.id,
+        });
 
         // Process payment with retry logic
         return this.processPaymentWithRetry(
@@ -155,6 +163,13 @@ export class PaymentsService {
             // Handle retry state
             transaction.retryCount = attempt;
 
+            console.log({
+                event: 'PAYMENT_RETRY',
+                transactionId: transaction.id,
+                attempt,
+                errorCode: bankResponse.errorCode,
+            });
+
             await this.updateTransactionStatus(
                 transaction,
                 TransactionStatus.RETRYING,
@@ -162,9 +177,15 @@ export class PaymentsService {
                 bankResponse.errorCode,
             );
 
-            // Exponential backoff
-            const delay =
+            // Exponential backoff + jitter
+            const baseDelay =
                 Math.pow(2, attempt) * 1000;
+
+            const jitter =
+                Math.floor(Math.random() * 500);
+
+            const delay =
+                baseDelay + jitter;
 
             await this.sleep(delay);
 
@@ -192,10 +213,21 @@ export class PaymentsService {
         transaction.authorizationCode =
             authorizationCode;
 
+        // AUTHORIZED state
         await this.updateTransactionStatus(
             transaction,
             TransactionStatus.AUTHORIZED,
             TransactionStatus.PROCESSING,
+        );
+
+        /**
+        * Simulate payment capture
+        * In real systems this may happen later
+        */
+        await this.updateTransactionStatus(
+            transaction,
+            TransactionStatus.CAPTURED,
+            TransactionStatus.AUTHORIZED,
         );
 
         return {

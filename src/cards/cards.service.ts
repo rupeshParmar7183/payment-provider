@@ -3,7 +3,7 @@ import {
     Injectable,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { Card } from '../models/card.model';
 import { AddCardDto } from './dto/add-card.dto';
 import { isValidCardNumber } from '../common/utils/luhn.util';
@@ -51,7 +51,7 @@ export class CardsService {
 
         const maskedCardNumber = `**** **** **** ${last4}`;
 
-        const cardToken = uuidv4();
+        const cardToken = randomUUID();
 
         const card = await this.cardModel.create({
             userId,

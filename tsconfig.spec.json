@@ -1,0 +1,27 @@
+// {
+//   "extends": "./tsconfig.json",
+
+//   "compilerOptions": {
+//     "types": ["jest", "node"]
+//   },
+
+//   "include": [
+//     "src/**/*.spec.ts",
+//     "test/**/*.ts"
+//   ]
+// }
+
+{
+  "extends": "./tsconfig.json",
+
+  "compilerOptions": {
+    "types": ["jest", "node"],
+
+    "esModuleInterop": true
+  },
+
+  "include": [
+    "src/**/*.spec.ts",
+    "test/**/*.ts"
+  ]
+}

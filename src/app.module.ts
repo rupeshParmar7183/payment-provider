@@ -13,12 +13,24 @@ import { Card } from './models/card.model';
 import { Transaction } from './models/transaction.model';
 import { TransactionStateHistory } from './models/transaction-state-history.model';
 import { IdempotencyKey } from './models/idempotency-key.model';
-
+import { MetricsModule } from './metrics/metrics.module';
+import {
+  ThrottlerModule,
+  ThrottlerGuard,
+} from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
 
     SequelizeModule.forRoot({
       dialect: 'postgres',
@@ -29,6 +41,7 @@ import { IdempotencyKey } from './models/idempotency-key.model';
       database: process.env.DB_DATABASE,
       autoLoadModels: true,
       synchronize: true,
+      logging: false,
       models: [User, Card, Transaction, TransactionStateHistory, IdempotencyKey],
     }),
 
@@ -39,9 +52,16 @@ import { IdempotencyKey } from './models/idempotency-key.model';
     PaymentsModule,
 
     BankModule,
+
+    MetricsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, {
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard,
+  },],
+
+
 
 })
-export class AppModule {}
+export class AppModule { }

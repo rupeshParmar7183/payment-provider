@@ -5,4 +5,5 @@ export enum TransactionStatus {
   CAPTURED = 'CAPTURED',
   FAILED = 'FAILED',
   RETRYING = 'RETRYING',
+  
 }

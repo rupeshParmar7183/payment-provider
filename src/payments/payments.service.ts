@@ -14,6 +14,7 @@ import { IdempotencyKey } from '../models/idempotency-key.model';
 import { TransactionStatus } from '../common/enums/transaction-status.enum';
 
 import { BankService } from '../bank/bank.service';
+import { AppLogger } from 'src/common/logger/app.logger';
 
 @Injectable()
 export class PaymentsService {
@@ -40,6 +41,7 @@ export class PaymentsService {
         userId: string,
         createPaymentDto: CreatePaymentDto,
         idempotencyKey: string,
+        correlationId: string,
     ) {
         const {
             cardToken,
@@ -61,6 +63,15 @@ export class PaymentsService {
                 amount,
                 currency,
             );
+        // Log payment initiation
+        AppLogger.log({
+            level: 'INFO',
+            event: 'PAYMENT_STARTED',
+            correlationId,
+            userId,
+            amount,
+            currency,
+        });
         await this.idempotencyModel.create({
             idempotencyKey,
             transactionId: transaction.id,
@@ -69,6 +80,7 @@ export class PaymentsService {
         // Process payment with retry logic
         return this.processPaymentWithRetry(
             transaction,
+            correlationId,
         );
     }
 
@@ -131,6 +143,7 @@ export class PaymentsService {
      */
     async processPaymentWithRetry(
         transaction: Transaction,
+        correlationId: string,
     ) {
         let attempt = 0;
 
@@ -147,6 +160,8 @@ export class PaymentsService {
                 return this.handleSuccessfulPayment(
                     transaction,
                     bankResponse.authorizationCode!,
+                    correlationId,
+                    transaction.userId,
                 );
             }
 
@@ -162,12 +177,15 @@ export class PaymentsService {
 
             // Handle retry state
             transaction.retryCount = attempt;
-
-            console.log({
+            // Log retry attempt
+            AppLogger.warn({
                 event: 'PAYMENT_RETRY',
-                transactionId: transaction.id,
+                correlationId,
+                transactionId:
+                    transaction.id,
                 attempt,
-                errorCode: bankResponse.errorCode,
+                errorCode:
+                    bankResponse.errorCode,
             });
 
             await this.updateTransactionStatus(
@@ -200,6 +218,7 @@ export class PaymentsService {
         return this.handleFailedPayment(
             transaction,
             bankResponse!.errorCode!,
+            correlationId,
         );
     }
 
@@ -209,6 +228,8 @@ export class PaymentsService {
     async handleSuccessfulPayment(
         transaction: Transaction,
         authorizationCode: string,
+        correlationId: string,
+        userId: string
     ) {
         transaction.authorizationCode =
             authorizationCode;
@@ -230,6 +251,15 @@ export class PaymentsService {
             TransactionStatus.AUTHORIZED,
         );
 
+
+        AppLogger.log({
+            level: 'INFO',
+            event: 'PAYMENT_CAPTURED',
+            correlationId,
+            transactionId:
+                transaction.id,
+            userId,
+        });
         return {
             transactionId: transaction.id,
             status: transaction.status,
@@ -243,6 +273,7 @@ export class PaymentsService {
     async handleFailedPayment(
         transaction: Transaction,
         errorCode: string,
+        correlationId: string,
     ) {
         transaction.failureReason = errorCode;
 
@@ -252,6 +283,15 @@ export class PaymentsService {
             TransactionStatus.PROCESSING,
             errorCode,
         );
+
+        AppLogger.error({
+            event: 'PAYMENT_FAILED',
+            correlationId,
+            transactionId:
+                transaction.id,
+            error:
+                errorCode,
+        });
 
         return {
             transactionId: transaction.id,

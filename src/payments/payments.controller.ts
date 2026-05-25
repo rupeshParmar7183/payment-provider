@@ -37,11 +37,15 @@ export class PaymentsController {
                     req.idempotentTransaction.status,
             };
         }
+
+        const correlationId =
+            req['correlationId'];
         return this.paymentsService.createPayment(
             req.user.userId,
 
             createPaymentDto,
-            idempotencyKey
+            idempotencyKey,
+            correlationId
         );
     }
 }

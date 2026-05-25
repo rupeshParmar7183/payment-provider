@@ -390,92 +390,87 @@ Improves reliability for temporary failures such as:
 ---
 
 
-## ER Diagram 
+# ER Diagram
 
-┌─────────────────────┐
-│        users        │
-├─────────────────────┤
-│ id (PK)             │
-│ email               │
-│ password            │
-│ createdAt           │
-│ updatedAt           │
-└─────────┬───────────┘
-          │ 1
-          │
-          │ N
-┌─────────▼───────────┐
-│        cards        │
-├─────────────────────┤
-│ id (PK)             │
-│ userId (FK)         │
-│ cardToken           │
-│ maskedCardNumber    │
-│ cardType            │
-│ expiryMonth         │
-│ expiryYear          │
-│ createdAt           │
-│ updatedAt           │
-└─────────────────────┘
+## Relationships
 
+| Parent Table | Relationship | Child Table |
+|---|---|---|
+| users | 1 → N | cards |
+| users | 1 → N | transactions |
+| transactions | 1 → N | transaction_state_history |
+| transactions | 1 → 1 | idempotency_keys |
 
-┌─────────────────────┐
-│        users        │
-├─────────────────────┤
-│ id (PK)             │
-│ email               │
-│ password            │
-└─────────┬───────────┘
-          │ 1
-          │
-          │ N
-┌─────────▼──────────────┐
-│      transactions      │
-├────────────────────────┤
-│ id (PK)                │
-│ userId (FK)            │
-│ cardToken              │
-│ amount                 │
-│ currency               │
-│ status                 │
-│ retryCount             │
-│ authorizationCode      │
-│ failureReason          │
-│ createdAt              │
-│ updatedAt              │
-└─────────┬──────────────┘
-          │ 1
-          │
-          │ N
-┌─────────▼────────────────────┐
-│  transaction_state_history   │
-├──────────────────────────────┤
-│ id (PK)                      │
-│ transactionId (FK)           │
-│ fromState                    │
-│ toState                      │
-│ reason                       │
-│ createdAt                    │
-└──────────────────────────────┘
+---
 
+## users
 
-┌────────────────────────┐
-│      transactions      │
-├────────────────────────┤
-│ id (PK)                │
-└─────────┬──────────────┘
-          │ 1
-          │
-          │ 1
-┌─────────▼──────────────┐
-│    idempotency_keys    │
-├────────────────────────┤
-│ id (PK)                │
-│ idempotencyKey         │
-│ transactionId (FK)     │
-│ createdAt              │
-│ updatedAt              │
-└────────────────────────┘
+| Column | Type | Key |
+|---|---|---|
+| id | UUID | PK |
+| email | String | |
+| password | String | |
+| createdAt | Date | |
+| updatedAt | Date | |
+
+---
+
+## cards
+
+| Column | Type | Key |
+|---|---|---|
+| id | UUID | PK |
+| userId | UUID | FK |
+| cardToken | UUID | |
+| maskedCardNumber | String | |
+| cardType | String | |
+| expiryMonth | Number | |
+| expiryYear | Number | |
+| createdAt | Date | |
+| updatedAt | Date | |
+
+---
+
+## transactions
+
+| Column | Type | Key |
+|---|---|---|
+| id | UUID | PK |
+| userId | UUID | FK |
+| cardToken | UUID | |
+| amount | Number | |
+| currency | String | |
+| status | Enum | |
+| retryCount | Number | |
+| authorizationCode | String | |
+| failureReason | String | |
+| createdAt | Date | |
+| updatedAt | Date | |
+
+---
+
+## transaction_state_history
+
+| Column | Type | Key |
+|---|---|---|
+| id | UUID | PK |
+| transactionId | UUID | FK |
+| fromState | String | |
+| toState | String | |
+| reason | String | |
+| createdAt | Date | |
+
+---
+
+## idempotency_keys
+
+| Column | Type | Key |
+|---|---|---|
+| id | UUID | PK |
+| idempotencyKey | String | |
+| transactionId | UUID | FK |
+| createdAt | Date | |
+| updatedAt | Date | |
 
 # Author
 

@@ -262,6 +262,44 @@ Request:
 }
 ```
 
+
+### Mock Bank Failure Simulation
+
+The internal mock bank service simulates:
+- Success: 85%
+- Insufficient funds: 8%
+- Invalid card: 2%
+- Card expired: 2%
+- Network timeout: 2%
+- Rate limit exceeded: 1%
+
+Variable response time:
+- 100ms to 3000ms
+
+## Rate Limiting
+
+Implemented using NestJS Throttler module.
+
+Configuration:
+- 10 requests per minute per user/IP
+
+Purpose:
+- Prevent API abuse
+- Protect payment endpoints
+- Improve system stability
+
+
+
+## Observability & Logging
+
+Implemented structured logging with:
+- Correlation IDs
+- Event-based logs
+- Retry logs
+- Error logs
+- Payment lifecycle tracking
+
+Each request generates a unique correlation ID which is propagated across logs for traceability and debugging.
 ---
 
 ## Metrics
@@ -276,6 +314,20 @@ Headers:
 
 ```http
 Authorization: Bearer <token>
+```
+
+
+Example Response:
+
+```json
+{
+  "overview": {
+    "totalTransactions": 12,
+    "successfulTransactions": 9,
+    "failedTransactions": 3,
+    "successRate": "75.00%"
+  }
+}
 ```
 
 ---
